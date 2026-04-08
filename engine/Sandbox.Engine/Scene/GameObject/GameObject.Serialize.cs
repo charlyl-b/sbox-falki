@@ -346,7 +346,22 @@ public partial class GameObject
 			var prefabFile = ResourceLibrary.Get<PrefabFile>( PrefabInstance.PrefabSource );
 			if ( !IsPrefabLoaded( prefabFile ) )
 			{
+				// Preserve patch and GUID mappings so the instance data survives save/load round-trips
+				// and can be fully restored when the prefab file comes back.
+				if ( node[JsonKeys.PrefabInstancePatch] is JsonObject stubPatchJson )
+				{
+					PrefabInstance.InitPatch( Json.FromNode<Json.Patch>( stubPatchJson ) );
+					PrefabInstance.InitLookups( node[JsonKeys.PrefabIdToInstanceId]?.Deserialize<Dictionary<Guid, Guid>>() ?? new Dictionary<Guid, Guid>() );
+				}
+
+				// Keep this object visible in the hierarchy as a disabled stub.
+				DeserializeId( node );
+				Name = $"[Missing Prefab] {PrefabInstance.PrefabSource}";
+				_enabled = false;
+				Flags |= GameObjectFlags.Error;
+
 				PostDeserialize( options );
+				UpdateEnabledStatus();
 				return;
 			}
 
