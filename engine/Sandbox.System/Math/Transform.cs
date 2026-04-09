@@ -355,11 +355,11 @@ public struct Transform : System.IEquatable<Transform>, IInterpolator<Transform>
 	/// Returns true if we're nearly equal to the passed transform.
 	/// </summary>
 	/// <param name="tx">The value to compare with</param>
-	/// <param name="delta">The max difference between component values</param>
+	/// <param name="delta">The max difference between component values (used for Position and Scale)</param>
 	/// <returns>True if nearly equal</returns>
 	public readonly bool AlmostEqual( in Transform tx, float delta = 0.0001f )
 	{
-		return Position.AlmostEqual( tx.Position, delta ) && Scale.AlmostEqual( tx.Scale, delta ) && Rotation.AlmostEqual( tx.Rotation, delta );
+		return Position.AlmostEqual( tx.Position, delta ) && Scale.AlmostEqual( tx.Scale, delta ) && Rotation.AlmostEqual( tx.Rotation );
 	}
 	#endregion
 

@@ -47,8 +47,8 @@ public class EqualitySemantics
 		var a = Rotation.Identity;
 		var b = Rotation.Identity;
 
-		// Nudge one quaternion component by a tiny amount within tolerance
-		b._quat.X += 1e-5f;
+		// Nudge one quaternion component by a tiny amount within the dot-product tolerance
+		b._quat.X += 5e-5f;
 
 		Assert.IsTrue( a == b, "operator == should use AlmostEqual and treat tiny differences as equal" );
 		Assert.IsFalse( a != b );
@@ -116,5 +116,47 @@ public class EqualitySemantics
 
 		Assert.IsTrue( prefab == instance, "operator == should consider these approximately equal" );
 		Assert.IsFalse( prefab.Equals( instance ), "Equals must detect the sub-tolerance difference" );
+	}
+
+	/// <summary>
+	/// q and -q represent the same orientation; AlmostEqual uses |Dot| to handle this.
+	/// </summary>
+	[TestMethod]
+	public void Rotation_AlmostEqual_TreatsAntipodalQuaternionsAsEqual()
+	{
+		var q = Rotation.FromAxis( Vector3.Up, 45 );
+		var negQ = new Rotation( -q._quat.X, -q._quat.Y, -q._quat.Z, -q._quat.W );
+
+		Assert.IsTrue( q.AlmostEqual( negQ ) );
+		Assert.IsTrue( q == negQ );
+	}
+
+	/// <summary>
+	/// Equals is bitwise, so q and -q are distinct even though they're the same orientation.
+	/// </summary>
+	[TestMethod]
+	public void Rotation_Equals_DistinguishesAntipodalQuaternions()
+	{
+		var q = Rotation.FromAxis( Vector3.Up, 45 );
+		var negQ = new Rotation( -q._quat.X, -q._quat.Y, -q._quat.Z, -q._quat.W );
+
+		Assert.IsFalse( q.Equals( negQ ) );
+	}
+
+	/// <summary>
+	/// Default delta = 1e-7 ≈ 0.05° angular tolerance (near float32 precision floor).
+	/// </summary>
+	[TestMethod]
+	public void Rotation_AlmostEqual_DefaultToleranceIsAbout0Point05Degrees()
+	{
+		var identity = Rotation.Identity;
+
+		// 0.01° is within ~0.05° tolerance
+		var inside = Rotation.FromAxis( Vector3.Up, 0.01f );
+		Assert.IsTrue( identity.AlmostEqual( inside ) );
+
+		// 0.1° is outside ~0.05° tolerance
+		var outside = Rotation.FromAxis( Vector3.Up, 0.1f );
+		Assert.IsFalse( identity.AlmostEqual( outside ) );
 	}
 }

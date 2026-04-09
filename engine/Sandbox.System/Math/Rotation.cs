@@ -675,13 +675,17 @@ public struct Rotation : System.IEquatable<Rotation>, IParsable<Rotation>, IInte
 
 	/// <summary>
 	/// Returns true if we're nearly equal to the passed rotation.
+	/// Uses the absolute dot product so that antipodal quaternions (q and -q),
+	/// which represent the same orientation, are correctly treated as equal.
 	/// </summary>
 	/// <param name="r">The value to compare with</param>
-	/// <param name="delta">Dot-product threshold: rotations are equal when Dot(a, b) &gt; 1 - delta</param>
+	/// <param name="delta">Dot-product threshold: rotations are equal when |Dot(a, b)| &gt; 1 - delta.
+	/// For unit quaternions Dot = cos(θ/2), so delta = 0.0000001 ≈ 0.05° angular tolerance.
+	/// This is near the float32 precision floor (ULP at 1.0 ≈ 6e-8).</param>
 	/// <returns>True if nearly equal</returns>
-	public readonly bool AlmostEqual( in Rotation r, float delta = 0.0001f )
+	public readonly bool AlmostEqual( in Rotation r, float delta = 0.0000001f )
 	{
-		return Quaternion.Dot( _quat, r._quat ) > 1.0f - delta;
+		return MathF.Abs( Quaternion.Dot( _quat, r._quat ) ) > 1.0f - delta;
 	}
 	#endregion
 
